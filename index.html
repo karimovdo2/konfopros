@@ -101,41 +101,44 @@
         <span id="talks-status" class="text-sm text-gray-600"></span>
       </div>
     </section>
-
     <!-- Оценка организации -->
     <section id="view-org" class="hidden mt-6 glass rounded-2xl shadow-xl p-6 md:p-8">
       <div class="flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold">Результаты онлайн‑опроса по итогам конференции</h2>
-          <p class="text-gray-600">Ответьте произвольно, в свободной форме.</p>
+          <h2 class="text-2xl font-bold">Онлайн‑опрос по итогам конференции</h2>
+          <p class="text-gray-600">Первые три пункта — оценка по звёздам (1–5), далее — свободные ответы.</p>
         </div>
         <button class="text-rpn-primary hover:underline" data-back>← Назад</button>
       </div>
 
       <form id="org-form" class="mt-4 space-y-5">
+        <!-- ★ 1–3: рейтинги со звёздами -->
+        <div id="org-stars" class="space-y-4"></div>
+
+        <!-- 4–9: текстовые ответы -->
         <div>
-          <label class="block font-medium mb-2">2. Что положительного Вы хотели бы отметить?</label>
-          <textarea name="q2" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Опишите сильные стороны мероприятия"></textarea>
+          <label class="block font-medium mb-2">4. Что положительного Вы хотели бы отметить?</label>
+          <textarea name="n4_pos" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Опишите сильные стороны мероприятия"></textarea>
         </div>
         <div>
-          <label class="block font-medium mb-2">3. Что отрицательного Вы хотели бы отметить?</label>
-          <textarea name="q3" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Что можно улучшить?"></textarea>
+          <label class="block font-medium mb-2">5. Что отрицательного Вы хотели бы отметить?</label>
+          <textarea name="n5_neg" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Что можно улучшить?"></textarea>
         </div>
         <div>
           <label class="block font-medium mb-2">6. Какие доклады (докладчики) показались Вам наиболее интересными и практически значимыми?</label>
-          <textarea name="q6" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="ФИО спикеров, темы"></textarea>
+          <textarea name="n6_besttalks" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="ФИО спикеров, темы"></textarea>
         </div>
         <div>
           <label class="block font-medium mb-2">7. Каких докладчиков Вы хотели бы услышать на следующих пленарных секциях в рамках Школы молодого ученого?</label>
-          <textarea name="q7" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="ФИО, организации"></textarea>
+          <textarea name="n7_future_speakers" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="ФИО, организации"></textarea>
         </div>
         <div>
           <label class="block font-medium mb-2">8. Какие темы Вы бы предложили для следующих пленарных докладов?</label>
-          <textarea name="q8" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Ключевые темы/вопросы"></textarea>
+          <textarea name="n8_topics" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Ключевые темы/вопросы"></textarea>
         </div>
         <div>
-          <label class="block font-medium mb-2">13. Ваши предложения и пожелания</label>
-          <textarea name="q13" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Свободная форма"></textarea>
+          <label class="block font-medium mb-2">9. Ваши предложения и пожелания</label>
+          <textarea name="n9_suggestions" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Свободная форма"></textarea>
         </div>
 
         <div class="pt-2 flex items-center gap-3">
@@ -250,15 +253,55 @@
     const orgForm = $('#org-form');
     const orgStatus = $('#org-status');
 
+    // ★ Вопросы со звёздной оценкой (1–5)
+    const orgStarsWrap = document.getElementById('org-stars');
+    const orgStarQuestions = [
+      { name: 'n1_overall', label: '1. Общая организация мероприятия' },
+      { name: 'n2_coffee',  label: '2. Организация кофе-брейков' },
+      { name: 'n3_hall',    label: '3. Зона докладов (звук, свет, места)' }
+    ];
+
+    function renderOrgStars(){
+      orgStarsWrap.innerHTML = '';
+      orgStarQuestions.forEach(q => {
+        const row = document.createElement('div');
+        row.className = 'rounded-xl border border-gray-200 p-4 bg-white/80';
+
+        const lab = document.createElement('label');
+        lab.className = 'block font-medium mb-2';
+        lab.textContent = q.label;
+
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden'; hidden.name = q.name; hidden.value = '0';
+
+        const stars = createStars(5, (val) => { hidden.value = String(val); });
+        const starsBox = document.createElement('div');
+        starsBox.className = 'flex items-center gap-1';
+        starsBox.append(...stars.elements);
+
+        row.append(lab, starsBox, hidden);
+        orgStarsWrap.append(row);
+      });
+    }
+    renderOrgStars();
+
     orgForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
+        // Мини‑валидация: требуем оценки для первых трёх пунктов
+        const fd = new FormData(orgForm);
+        const miss = orgStarQuestions.filter(q => Number(fd.get(q.name) || 0) < 1);
+        if (miss.length) { orgStatus.textContent = 'Пожалуйста, поставьте оценки по пунктам 1–3'; return; }
+
         orgStatus.textContent = 'Сохраняем…';
-        const data = Object.fromEntries(new FormData(orgForm).entries());
+        const data = Object.fromEntries(fd.entries());
+        // Приводим звёзды к числам
+        orgStarQuestions.forEach(q => { data[q.name] = Number(data[q.name] || 0); });
         const payload = { createdAt: Date.now(), ...data };
         await addDoc(collection(db, 'conf_org_feedback'), payload);
         orgStatus.textContent = 'Спасибо! Ответы сохранены.';
         orgForm.reset();
+        renderOrgStars();
       } catch (e) {
         console.error(e);
         orgStatus.textContent = 'Ошибка сохранения';
