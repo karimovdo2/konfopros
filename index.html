@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Опрос по конференции • Роспотребнадзор‑стиль</title>
+
+  <!-- Цвета темы -->
+  <meta name="theme-color" content="#b00020" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Настройка палитры под фирменные цвета (бордовый + золотой) */
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            rpn: {
+              primary: '#b00020',  // бордовый
+              primaryDark: '#7f0017',
+              gold: '#d1a948',     // золотой
+              goldDark: '#b68f34',
+              bg1: '#fff6f6',
+              bg2: '#fffaf0'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Иконки (звезды) -->
+  <style>
+    .star svg { width: 28px; height: 28px; transition: transform .08s ease; }
+    .star:hover svg { transform: scale(1.05); }
+    .star--active svg path { fill: #f59e0b; } /* amber-500 */
+    .glass { backdrop-filter: saturate(140%) blur(10px); background: rgba(255,255,255,.85); }
+  </style>
+</head>
+<body class="min-h-screen text-gray-900" style="background: radial-gradient(1200px 600px at 15% 10%, #fff, transparent), linear-gradient(135deg, rgba(176,0,32,.08), rgba(209,169,72,.10));">
+  <!-- Шапка -->
+  <header class="sticky top-0 z-10 bg-white/70 backdrop-blur border-b border-white/60">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+      <!-- Мини‑эмблема без использования официального герба -->
+      <div class="w-10 h-10 rounded-full bg-rpn-primary text-white grid place-items-center font-bold shadow" aria-hidden="true">РПН</div>
+      <div class="flex-1">
+        <h1 class="text-lg font-semibold">Онлайн‑опрос конференции</h1>
+        <p class="text-sm text-gray-600">Стиль Роспотребнадзора • Бордовый & Золото</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Приветственный блок / Роутер -->
+    <section id="view-home" class="glass rounded-2xl shadow-xl p-6 md:p-8">
+      <div class="flex items-start gap-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-rpn-primary to-rpn-gold grid place-items-center text-white shadow-md">
+          <!-- декоративный щит -->
+          <svg viewBox="0 0 24 24" class="w-7 h-7"><path fill="currentColor" d="M12 2l7 3v6c0 5-3.5 9-7 11c-3.5-2-7-6-7-11V5l7-3Z"/></svg>
+        </div>
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold">Что вы хотите оценить?</h2>
+          <p class="text-gray-600 mt-1">Выберите направление, форма подстроится автоматически.</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-6">
+        <button id="btn-rate-talks" class="group rounded-xl p-5 border border-rpn-primary/15 hover:border-rpn-primary/30 bg-white/70 hover:bg-white shadow transition text-left">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Оценить <span class="text-rpn-primary">доклады</span></h3>
+            <span class="px-3 py-1 text-xs rounded-full bg-rpn-primary text-white">звёзды 1–5</span>
+          </div>
+          <p class="mt-1 text-gray-600">Поставьте оценки пяти выступлениям (ФИО + тема).</p>
+        </button>
+
+        <button id="btn-rate-org" class="group rounded-xl p-5 border border-rpn-gold/30 hover:border-rpn-gold/50 bg-gradient-to-br from-white/80 to-rpn-bg2 shadow transition text-left">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Оценить <span class="text-rpn-gold">организацию</span></h3>
+            <span class="px-3 py-1 text-xs rounded-full bg-rpn-gold text-white">свободные ответы</span>
+          </div>
+          <p class="mt-1 text-gray-700">Расскажите, что понравилось, что улучшить и какие темы/спикеров ждёте.</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- Оценка докладов -->
+    <section id="view-talks" class="hidden mt-6 glass rounded-2xl shadow-xl p-6 md:p-8">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold">Оценка докладов</h2>
+          <p class="text-gray-600">Выберите количество звёзд (1 — минимальная, 5 — максимальная).</p>
+        </div>
+        <button class="text-rpn-primary hover:underline" data-back>← Назад</button>
+      </div>
+
+      <div id="talks-list" class="mt-4 space-y-4"></div>
+
+      <div class="mt-6 flex items-center gap-3">
+        <button id="submit-talks" class="px-5 py-3 rounded-xl text-white bg-rpn-primary hover:bg-rpn-primaryDark shadow disabled:opacity-50 disabled:cursor-not-allowed" disabled>Отправить оценки</button>
+        <span id="talks-status" class="text-sm text-gray-600"></span>
+      </div>
+    </section>
+
+    <!-- Оценка организации -->
+    <section id="view-org" class="hidden mt-6 glass rounded-2xl shadow-xl p-6 md:p-8">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold">Результаты онлайн‑опроса по итогам конференции</h2>
+          <p class="text-gray-600">Ответьте произвольно, в свободной форме.</p>
+        </div>
+        <button class="text-rpn-primary hover:underline" data-back>← Назад</button>
+      </div>
+
+      <form id="org-form" class="mt-4 space-y-5">
+        <div>
+          <label class="block font-medium mb-2">2. Что положительного Вы хотели бы отметить?</label>
+          <textarea name="q2" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Опишите сильные стороны мероприятия"></textarea>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">3. Что отрицательного Вы хотели бы отметить?</label>
+          <textarea name="q3" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Что можно улучшить?"></textarea>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">6. Какие доклады (докладчики) показались Вам наиболее интересными и практически значимыми?</label>
+          <textarea name="q6" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="ФИО спикеров, темы"></textarea>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">7. Каких докладчиков Вы хотели бы услышать на следующих пленарных секциях в рамках Школы молодого ученого?</label>
+          <textarea name="q7" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="ФИО, организации"></textarea>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">8. Какие темы Вы бы предложили для следующих пленарных докладов?</label>
+          <textarea name="q8" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Ключевые темы/вопросы"></textarea>
+        </div>
+        <div>
+          <label class="block font-medium mb-2">13. Ваши предложения и пожелания</label>
+          <textarea name="q13" class="w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rpn-gold bg-white/80" rows="3" placeholder="Свободная форма"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center gap-3">
+          <button type="submit" class="px-5 py-3 rounded-xl text-white bg-rpn-gold hover:bg-rpn-goldDark shadow">Отправить</button>
+          <span id="org-status" class="text-sm text-gray-600"></span>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Firebase + логика -->
+  <script type="module">
+    /* ================= Firebase ================= */
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.11.0/firebase-app.js';
+    import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/9.11.0/firebase-firestore.js';
+
+    /* ВСТАВЬТЕ СВОЮ КОНФИГУРАЦИЮ */
+    const firebaseConfig = {
+      apiKey:            'YOUR_API_KEY',
+      authDomain:        'YOUR_PROJECT.firebaseapp.com',
+      projectId:         'YOUR_PROJECT',
+      storageBucket:     'YOUR_PROJECT.appspot.com',
+      messagingSenderId: 'YOUR_SENDER_ID',
+      appId:             'YOUR_APP_ID'
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
+
+    /* ================= Участники (пример) ================= */
+    const participants = [
+      { id: 'ivanov',   fio: 'Иванов Алексей Андреевич',   talk: 'Гигиеническая оценка микропластика в питьевой воде' },
+      { id: 'petrova',  fio: 'Петрова Елена Викторовна',   talk: 'Мониторинг качества воздуха в промышленной зоне' },
+      { id: 'smirnov',  fio: 'Смирнов Дмитрий Олегович',   talk: 'Пищевые консерванты и риски для печени' },
+      { id: 'akhmetova',fio: 'Ахметова Регина Радиковна',  talk: 'Профилактика профессиональных аллергодерматозов' },
+      { id: 'husainov', fio: 'Хусаинов Ильдар Ильдарович', talk: 'Факторы производственной среды и СС‑риск' }
+    ];
+
+    /* ================= Навигация (роутер) ================= */
+    const $ = sel => document.querySelector(sel);
+    const home   = $('#view-home');
+    const talks  = $('#view-talks');
+    const org    = $('#view-org');
+
+    $('#btn-rate-talks').addEventListener('click', () => show('talks'));
+    $('#btn-rate-org').addEventListener('click', () => show('org'));
+    document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => show('home')));
+
+    function show(which){
+      home.classList.add('hidden');
+      talks.classList.add('hidden');
+      org.classList.add('hidden');
+      (which==='home'?home:which==='talks'?talks:org).classList.remove('hidden');
+    }
+
+    /* ================= Вид: доклады ================= */
+    const talksList = $('#talks-list');
+    const btnSubmitTalks = $('#submit-talks');
+    const talksStatus = $('#talks-status');
+
+    const ratings = Object.fromEntries(participants.map(p => [p.id, 0]));
+
+    function renderTalks(){
+      talksList.innerHTML = '';
+      participants.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'rounded-xl border border-gray-200 p-4 bg-white/80';
+
+        const head = document.createElement('div');
+        head.className = 'flex items-start justify-between gap-3';
+        head.innerHTML = `<div><div class="font-semibold">${p.fio}</div><div class="text-sm text-gray-600">${p.talk}</div></div>`;
+
+        const starWrap = document.createElement('div');
+        starWrap.className = 'flex items-center gap-1 mt-3';
+
+        const stars = createStars(5, (val) => { ratings[p.id] = val; refreshSubmitState(); });
+        starWrap.append(...stars.elements);
+
+        card.append(head, starWrap);
+        talksList.append(card);
+      });
+    }
+
+    function refreshSubmitState(){
+      const ok = participants.every(p => ratings[p.id] > 0);
+      btnSubmitTalks.disabled = !ok;
+      talksStatus.textContent = ok ? 'Готово к отправке' : 'Поставьте оценку всем 5 докладам';
+    }
+
+    btnSubmitTalks.addEventListener('click', async () => {
+      try {
+        btnSubmitTalks.disabled = true;
+        talksStatus.textContent = 'Сохраняем…';
+        const payload = {
+          createdAt: Date.now(),
+          ratings: participants.map(p => ({ id: p.id, fio: p.fio, talk: p.talk, score: ratings[p.id] }))
+        };
+        await addDoc(collection(db, 'conf_ratings'), payload);
+        talksStatus.textContent = 'Спасибо! Оценки сохранены.';
+      } catch (e) {
+        console.error(e);
+        talksStatus.textContent = 'Ошибка сохранения';
+      } finally {
+        refreshSubmitState();
+      }
+    });
+
+    renderTalks();
+    refreshSubmitState();
+
+    /* ================= Вид: организация ================= */
+    const orgForm = $('#org-form');
+    const orgStatus = $('#org-status');
+
+    orgForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        orgStatus.textContent = 'Сохраняем…';
+        const data = Object.fromEntries(new FormData(orgForm).entries());
+        const payload = { createdAt: Date.now(), ...data };
+        await addDoc(collection(db, 'conf_org_feedback'), payload);
+        orgStatus.textContent = 'Спасибо! Ответы сохранены.';
+        orgForm.reset();
+      } catch (e) {
+        console.error(e);
+        orgStatus.textContent = 'Ошибка сохранения';
+      }
+    });
+
+    /* ================= Компонент звёзд ================= */
+    function createStars(n = 5, onChange){
+      let value = 0;
+      const elements = [];
+      const starSVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+
+      function render(){
+        elements.forEach((btn, i) => btn.classList.toggle('star--active', i < value));
+      }
+
+      for (let i = 0; i < n; i++){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'star p-1 rounded hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400';
+        btn.innerHTML = starSVG;
+        btn.setAttribute('aria-label', `${i+1} из ${n}`);
+        btn.addEventListener('click', () => { value = i + 1; render(); onChange?.(value); });
+        btn.addEventListener('mouseenter', () => { elements.forEach((b, j) => b.classList.toggle('star--active', j <= i)); });
+        btn.addEventListener('mouseleave', render);
+        elements.push(btn);
+      }
+      render();
+      return { elements };
+    }
+  </script>
+</body>
+</html>
